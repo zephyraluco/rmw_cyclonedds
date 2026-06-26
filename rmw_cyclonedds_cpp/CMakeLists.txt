@@ -34,13 +34,15 @@ find_package(tracetools REQUIRED)
 
 find_package(CycloneDDS QUIET CONFIG)
 if(CycloneDDS_FOUND)
-  # Support for shared memory in RMW depends on support for shared memory being compiled in
-  # Cyclone DDS and iceoryx_binding_c being available
-  get_target_property(_cyclonedds_has_shm CycloneDDS::ddsc SHM_SUPPORT_IS_AVAILABLE)
-  if(_cyclonedds_has_shm)
-    find_package(iceoryx_binding_c REQUIRED)
-  else()
-    message(STATUS "Cyclone DDS is NOT compiled with support for shared memory")
+  # iceoryx_binding_c is only needed for Cyclone DDS < 0.11
+  # Cyclone DDS 0.11+ uses PSMX (pluggable shared memory) instead
+  if(CycloneDDS_VERSION VERSION_LESS 0.11)
+    get_target_property(_cyclonedds_has_shm CycloneDDS::ddsc SHM_SUPPORT_IS_AVAILABLE)
+    if(_cyclonedds_has_shm)
+      find_package(iceoryx_binding_c REQUIRED)
+    else()
+      message(STATUS "Cyclone DDS is NOT compiled with support for shared memory")
+    endif()
   endif()
 else()
   message(WARNING "Could not find Eclipse Cyclone DDS - skipping '${PROJECT_NAME}'")
@@ -54,7 +56,7 @@ find_package(rosidl_runtime_c REQUIRED)
 find_package(rosidl_typesupport_introspection_c REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 
-if(_cyclonedds_has_shm)
+if(_cyclonedds_has_shm AND CycloneDDS_VERSION VERSION_LESS 0.11)
   ament_export_dependencies(iceoryx_binding_c)
 endif()
 ament_export_dependencies(CycloneDDS)
@@ -66,6 +68,8 @@ ament_export_dependencies(rmw_dds_common)
 ament_export_dependencies(rosidl_typesupport_introspection_c)
 ament_export_dependencies(rosidl_typesupport_introspection_cpp)
 ament_export_dependencies(tracetools)
+
+configure_file("src/cdds_version.hpp.in" "src/cdds_version.hpp")
 
 add_library(rmw_cyclonedds_cpp
   src/rmw_get_network_flow_endpoints.cpp
@@ -79,6 +83,8 @@ add_library(rmw_cyclonedds_cpp
   src/Serialization.cpp
   src/TypeSupport2.cpp
   src/TypeSupport.cpp)
+
+target_include_directories(rmw_cyclonedds_cpp PRIVATE ${CMAKE_BINARY_DIR}/src)
 
 target_link_libraries(rmw_cyclonedds_cpp PUBLIC
   rmw::rmw)
@@ -94,7 +100,7 @@ target_link_libraries(rmw_cyclonedds_cpp PRIVATE
   tracetools::tracetools
 )
 
-if(_cyclonedds_has_shm)
+if(_cyclonedds_has_shm AND CycloneDDS_VERSION VERSION_LESS 0.11)
   target_link_libraries(rmw_cyclonedds_cpp PRIVATE iceoryx_binding_c::iceoryx_binding_c)
 endif()
 

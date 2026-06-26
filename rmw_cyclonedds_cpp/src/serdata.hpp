@@ -20,13 +20,14 @@
 
 #include "TypeSupport2.hpp"
 #include "bytewise.hpp"
+#include "cdds_version.hpp"
 #include "dds/dds.h"
 #include "dds/ddsi/ddsi_serdata.h"
-#ifdef DDS_HAS_SHM
+#if CDDS_VERSION == CDDS_VERSION_0_10 && defined DDS_HAS_SHM
 extern "C" {
 #include "dds/ddsi/ddsi_shm_transport.h"
 }
-#endif  // DDS_HAS_SHM
+#endif
 
 #if !DDS_HAS_DDSI_SERTYPE
 #define ddsi_sertype ddsi_sertopic

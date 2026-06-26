@@ -15,7 +15,7 @@
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
   <depend>cyclonedds</depend>
-  <depend>iceoryx_binding_c</depend>
+  <!-- iceoryx_binding_c is only needed for Cyclone DDS < 0.11 (handled conditionally in CMakeLists.txt) -->
   <depend>rcutils</depend>
   <depend>rcpputils</depend>
   <depend>rmw</depend>
